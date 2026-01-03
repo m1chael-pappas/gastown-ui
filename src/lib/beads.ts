@@ -1,4 +1,5 @@
-import { readFileSync, existsSync } from "fs";
+import { readFileSync, existsSync, readdirSync, statSync } from "fs";
+import { join } from "path";
 import { Bead, TownEvent } from "@/types/gastown";
 
 const GASTOWN_PATH = process.env.GASTOWN_PATH || "~/gt";
@@ -13,7 +14,8 @@ function expandPath(path: string): string {
 export function getBeadsFilePath(rig?: string): string {
   const basePath = expandPath(GASTOWN_PATH);
   if (rig) {
-    return `${basePath}/rigs/${rig}/.beads/issues.jsonl`;
+    // Rigs are stored directly in ~/gt/<rigname>/ not ~/gt/rigs/<rigname>/
+    return `${basePath}/${rig}/.beads/issues.jsonl`;
   }
   return `${basePath}/.beads/issues.jsonl`;
 }
@@ -89,6 +91,26 @@ export function getBeadsStats(rig?: string) {
 export function getEventsFilePath(): string {
   const basePath = expandPath(GASTOWN_PATH);
   return `${basePath}/.events.jsonl`;
+}
+
+export function getAvailableRigs(): string[] {
+  const basePath = expandPath(GASTOWN_PATH);
+
+  if (!existsSync(basePath)) {
+    return [];
+  }
+
+  try {
+    const entries = readdirSync(basePath);
+    return entries.filter((entry) => {
+      const rigPath = join(basePath, entry);
+      const configPath = join(rigPath, "config.json");
+      // A rig has a config.json file
+      return statSync(rigPath).isDirectory() && existsSync(configPath);
+    });
+  } catch {
+    return [];
+  }
 }
 
 interface RawEvent {
