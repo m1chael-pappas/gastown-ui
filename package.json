@@ -4,23 +4,43 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:all": "concurrently \"pnpm dev\" \"pnpm terminal\"",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "terminal": "npx tsx server/terminal-server.ts",
+    "setup": "./scripts/setup.sh",
+    "setup:go": "cd backend && go build -o ../bin/gt ./cmd/gt && cd ../beads-cli && go build -o ../bin/bd ./cmd/bd",
+    "gastown": "GASTOWN_PATH=${GASTOWN_PATH:-~/gt} concurrently \"pnpm dev\" \"pnpm terminal\""
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.16",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/addon-web-links": "^0.12.0",
+    "@xterm/xterm": "^6.0.0",
+    "@xyflow/react": "^12.10.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.562.0",
     "next": "16.1.1",
+    "node-pty": "^1.1.0",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "tailwind-merge": "^3.4.0",
+    "ws": "^8.18.3",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
+    "chokidar": "^5.0.0",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

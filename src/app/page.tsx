@@ -1,65 +1,292 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useQuery } from "@tanstack/react-query";
+import {
+  Users,
+  CircleDot,
+  Truck,
+  Activity,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Zap,
+} from "lucide-react";
+import { StatCard, ProgressBar, StatusBadge } from "@/components/ui";
+import { Agent, Convoy, TownEvent } from "@/types/gastown";
+
+async function fetchBeadsStats() {
+  const res = await fetch("/api/beads?stats=true");
+  return res.json();
+}
+
+async function fetchAgents() {
+  const res = await fetch("/api/agents");
+  return res.json();
+}
+
+async function fetchConvoys() {
+  const res = await fetch("/api/convoys");
+  return res.json();
+}
+
+export default function HomePage() {
+  const { data: beadsData } = useQuery({
+    queryKey: ["beads-stats"],
+    queryFn: fetchBeadsStats,
+  });
+
+  const { data: agentsData } = useQuery({
+    queryKey: ["agents"],
+    queryFn: fetchAgents,
+  });
+
+  const { data: convoysData } = useQuery({
+    queryKey: ["convoys"],
+    queryFn: fetchConvoys,
+  });
+
+  const stats = beadsData?.stats || {
+    total: 0,
+    open: 0,
+    in_progress: 0,
+    blocked: 0,
+    actionable: 0,
+  };
+
+  const agents: Agent[] = agentsData?.agents || [];
+  const convoys: Convoy[] = convoysData?.convoys || [];
+
+  const activeAgents = agents.filter((a) => a.status === "working").length;
+  const activeConvoys = convoys.filter((c) => c.status === "active").length;
+
+  const recentEvents: TownEvent[] = [
+    {
+      type: "bead_closed",
+      timestamp: new Date().toISOString(),
+      data: { id: "gt-001" },
+      message: "polecat-3 completed task gt-001",
+    },
+    {
+      type: "convoy_milestone",
+      timestamp: new Date(Date.now() - 300000).toISOString(),
+      data: { id: "convoy-2" },
+      message: "convoy-alpha hit 50% milestone",
+    },
+    {
+      type: "agent_spawned",
+      timestamp: new Date(Date.now() - 600000).toISOString(),
+      data: { id: "polecat-5" },
+      message: "polecat-5 spawned for api rig",
+    },
+  ];
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-100">
+            Gas Town Control Center
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-sm text-zinc-400">
+            Multi-agent orchestration dashboard
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
+        <div className="flex items-center gap-2">
+          <span className="flex items-center gap-1.5 text-sm text-green-500">
+            <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+            System Online
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Active Agents"
+          value={activeAgents}
+          subtitle={`${agents.length} total`}
+          icon={Users}
+        />
+        <StatCard
+          title="Pending Work"
+          value={stats.open + stats.in_progress}
+          subtitle={`${stats.actionable} actionable`}
+          icon={CircleDot}
+        />
+        <StatCard
+          title="Active Convoys"
+          value={activeConvoys}
+          subtitle={`${convoys.length} total`}
+          icon={Truck}
+        />
+        <StatCard
+          title="System Health"
+          value="98%"
+          subtitle="All systems operational"
+          icon={Activity}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-6">
+          <h2 className="mb-4 text-lg font-semibold text-zinc-100">
+            Work Distribution
+          </h2>
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="flex w-28 items-center gap-2">
+                <Clock className="h-4 w-4 text-blue-500" />
+                <span className="text-sm text-zinc-400">Open</span>
+              </div>
+              <ProgressBar
+                value={stats.open}
+                max={stats.total || 1}
+                showPercentage={false}
+                className="flex-1"
+              />
+              <span className="w-8 text-right text-sm text-zinc-400">
+                {stats.open}
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex w-28 items-center gap-2">
+                <Zap className="h-4 w-4 text-yellow-500" />
+                <span className="text-sm text-zinc-400">In Progress</span>
+              </div>
+              <ProgressBar
+                value={stats.in_progress}
+                max={stats.total || 1}
+                showPercentage={false}
+                variant="warning"
+                className="flex-1"
+              />
+              <span className="w-8 text-right text-sm text-zinc-400">
+                {stats.in_progress}
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex w-28 items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-red-500" />
+                <span className="text-sm text-zinc-400">Blocked</span>
+              </div>
+              <ProgressBar
+                value={stats.blocked}
+                max={stats.total || 1}
+                showPercentage={false}
+                variant="danger"
+                className="flex-1"
+              />
+              <span className="w-8 text-right text-sm text-zinc-400">
+                {stats.blocked}
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex w-28 items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                <span className="text-sm text-zinc-400">Actionable</span>
+              </div>
+              <ProgressBar
+                value={stats.actionable}
+                max={stats.total || 1}
+                showPercentage={false}
+                variant="success"
+                className="flex-1"
+              />
+              <span className="w-8 text-right text-sm text-zinc-400">
+                {stats.actionable}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-6">
+          <h2 className="mb-4 text-lg font-semibold text-zinc-100">
+            Recent Events
+          </h2>
+          <div className="space-y-3">
+            {recentEvents.map((event, idx) => (
+              <div
+                key={idx}
+                className="flex items-start gap-3 rounded-lg bg-zinc-800/50 p-3"
+              >
+                <div className="mt-0.5">
+                  {event.type.includes("completed") ||
+                  event.type.includes("closed") ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  ) : event.type.includes("stuck") ? (
+                    <AlertCircle className="h-4 w-4 text-red-500" />
+                  ) : (
+                    <Activity className="h-4 w-4 text-blue-500" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-zinc-300">{event.message}</p>
+                  <p className="mt-0.5 text-xs text-zinc-500">
+                    {new Date(event.timestamp).toLocaleTimeString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-zinc-100">Active Agents</h2>
           <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/agents"
+            className="text-sm text-blue-500 hover:text-blue-400"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
+            View all →
           </a>
         </div>
-      </main>
+        {agents.length === 0 ? (
+          <p className="text-sm text-zinc-500">
+            No agents currently running. Start the Gas Town daemon to spawn
+            agents.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {agents.slice(0, 3).map((agent) => (
+              <div
+                key={agent.id}
+                className="flex items-center justify-between rounded-lg bg-zinc-800/50 p-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-700">
+                    <Users className="h-5 w-5 text-zinc-400" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-zinc-200">{agent.id}</p>
+                    <p className="text-xs text-zinc-500">
+                      {agent.role} • {agent.rig || "town"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  {agent.context_usage !== undefined && (
+                    <div className="w-32">
+                      <ProgressBar
+                        value={agent.context_usage}
+                        label="Context"
+                        size="sm"
+                        variant={
+                          agent.context_usage > 80
+                            ? "danger"
+                            : agent.context_usage > 60
+                            ? "warning"
+                            : "default"
+                        }
+                      />
+                    </div>
+                  )}
+                  <StatusBadge status={agent.status} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

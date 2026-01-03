@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Go binaries
+/bin/
+
+# Cloned repos (installed via setup)
+/backend/
+/beads-cli/
