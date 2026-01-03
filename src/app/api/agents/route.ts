@@ -1,13 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAgents, getAgentById, triggerHandoff, spawnPolecat } from "@/lib/gastown";
+import { getAllBeads } from "@/lib/beads";
+import { triggerHandoff, spawnPolecat } from "@/lib/gastown";
+import { Agent, Bead } from "@/types/gastown";
+
+// Convert agent beads to Agent type
+function beadToAgent(bead: Bead): Agent {
+  // Parse agent info from description
+  const desc = bead.description || "";
+  const roleMatch = desc.match(/role_type:\s*(\w+)/);
+  const rigMatch = desc.match(/rig:\s*(\w+)/);
+  const stateMatch = desc.match(/agent_state:\s*(\w+)/);
+
+  return {
+    id: bead.id,
+    role: (roleMatch?.[1] || "polecat") as Agent["role"],
+    rig: rigMatch?.[1] === "null" ? undefined : rigMatch?.[1],
+    status: stateMatch?.[1] === "running" ? "working" : "idle",
+    started_at: bead.created_at,
+    current_task: bead.title !== bead.id ? bead.title : undefined,
+  };
+}
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const id = searchParams.get("id");
 
   try {
+    // Get all beads and filter for agent type
+    const allBeads = getAllBeads();
+    const agentBeads = allBeads.filter((b) => b.issue_type === "agent");
+    const agents = agentBeads.map(beadToAgent);
+
     if (id) {
-      const agent = getAgentById(id);
+      const agent = agents.find((a) => a.id === id);
       if (!agent) {
         return NextResponse.json(
           { error: "Agent not found" },
@@ -17,10 +42,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ agent });
     }
 
-    const agents = getAgents();
     return NextResponse.json({ agents });
   } catch {
-    // Return empty array when Gas Town isn't running
     return NextResponse.json({ agents: [] });
   }
 }

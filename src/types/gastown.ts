@@ -1,6 +1,7 @@
 // Bead (Issue) Types
 export type BeadStatus = "open" | "in_progress" | "blocked" | "closed" | "ready";
 export type BeadType = "bug" | "feature" | "task" | "epic" | "chore";
+export type IssueType = "bug" | "feature" | "task" | "epic" | "chore" | "agent" | "convoy" | "molecule" | "gate" | "event" | "role";
 
 export interface Comment {
   id: string;
@@ -9,17 +10,27 @@ export interface Comment {
   created_at: string;
 }
 
+export interface Dependency {
+  issue_id: string;
+  depends_on_id: string;
+  type: string;
+  created_at: string;
+  created_by: string;
+}
+
 export interface Bead {
   id: string;
   title: string;
   description?: string;
   status: BeadStatus;
   type?: BeadType;
+  issue_type?: IssueType;
   priority?: number;
   assignee?: string;
   labels?: string[];
   blocks?: string[];
   depends_on?: string[];
+  dependencies?: Dependency[];
   created_at?: string;
   updated_at?: string;
   closed_at?: string;
@@ -27,6 +38,8 @@ export interface Bead {
   external_ref?: string;
   molecule_id?: string;
   step_id?: string;
+  agent_state?: string;
+  last_activity?: string;
 }
 
 // Convoy Types
@@ -38,8 +51,9 @@ export interface Convoy {
   description?: string;
   status: ConvoyStatus;
   beads: string[];
-  created_at: string;
-  updated_at: string;
+  progress?: number;
+  created_at?: string;
+  updated_at?: string;
   created_by?: string;
   notify?: boolean;
   human_required?: boolean;
