@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader2, Terminal, Trash2 } from "lucide-react";
+import { Send, Bot, User, Loader2, Terminal, Trash2, AlertTriangle, Key } from "lucide-react";
 
 interface Message {
   id: string;
@@ -11,6 +11,7 @@ interface Message {
 }
 
 export default function MayorChatPage() {
+  const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -19,6 +20,14 @@ export default function MayorChatPage() {
       timestamp: new Date(),
     },
   ]);
+
+  useEffect(() => {
+    // Check if API key is configured
+    fetch("/api/mayor/status")
+      .then((res) => res.json())
+      .then((data) => setHasApiKey(data.hasApiKey))
+      .catch(() => setHasApiKey(false));
+  }, []);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -98,6 +107,32 @@ export default function MayorChatPage() {
 
   return (
     <div className="flex h-full flex-col">
+      {/* API Key Warning */}
+      {hasApiKey === false && (
+        <div className="flex items-center gap-3 border-b border-amber-500/30 bg-amber-500/10 px-6 py-3">
+          <AlertTriangle className="h-5 w-5 text-amber-500" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-amber-200">
+              Anthropic API Key Required
+            </p>
+            <p className="text-xs text-amber-300/70">
+              Add <code className="rounded bg-amber-500/20 px-1">ANTHROPIC_API_KEY</code> to your{" "}
+              <code className="rounded bg-amber-500/20 px-1">.env.local</code> file to enable AI-powered chat.
+              Currently running in command-only mode.
+            </p>
+          </div>
+          <a
+            href="https://console.anthropic.com/settings/keys"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-medium text-zinc-900 hover:bg-amber-400"
+          >
+            <Key className="h-3 w-3" />
+            Get API Key
+          </a>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between border-b border-zinc-800 px-6 py-4">
         <div className="flex items-center gap-3">
@@ -106,7 +141,9 @@ export default function MayorChatPage() {
           </div>
           <div>
             <h1 className="text-lg font-semibold text-zinc-100">Mayor Chat</h1>
-            <p className="text-sm text-zinc-400">Coordinate work across your rigs</p>
+            <p className="text-sm text-zinc-400">
+              {hasApiKey ? "AI-powered coordination" : "Command mode (add API key for AI chat)"}
+            </p>
           </div>
         </div>
         <button

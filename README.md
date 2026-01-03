@@ -7,7 +7,7 @@ Web dashboard for [Gas Town](https://github.com/steveyegge/gastown) - a multi-ag
 ## Features
 
 - **Town Overview**: Real-time stats on agents, work items, and system health
-- **Web Terminal**: Run `gt prime` directly in the browser with full terminal emulation
+- **Mayor Chat**: AI-powered chat interface to coordinate work (requires Anthropic API key)
 - **Agent Management**: Monitor agent status, context usage, and trigger handoffs
 - **Convoy Tracking**: Track grouped work packages with progress visualization
 - **Beads Browser**: Filter and search work items by status, type, and priority
@@ -44,14 +44,8 @@ The setup script will:
 ### Running
 
 ```bash
-# Start the dashboard only
+# Start the dashboard
 pnpm dev
-
-# Start both dashboard and web terminal
-pnpm dev:all
-
-# Or start the terminal server separately
-pnpm terminal
 
 # Open http://localhost:3000
 ```
@@ -61,8 +55,22 @@ pnpm terminal
 Create `.env.local`:
 
 ```bash
-GASTOWN_PATH=~/gt  # Path to your Gas Town workspace
+# Required: Path to your Gas Town workspace
+GASTOWN_PATH=~/gt
+
+# Optional: Enable AI-powered Mayor Chat
+# Get your key at https://console.anthropic.com/settings/keys
+ANTHROPIC_API_KEY=sk-ant-...
 ```
+
+### Mayor Chat
+
+The Mayor Chat provides an AI-powered interface to coordinate work across your rigs. Without an API key, it runs in "command mode" where you can execute gt/bd commands directly. With an API key, you can use natural language to:
+
+- Create and manage convoys
+- Assign work to agents
+- Check status and get recommendations
+- Coordinate complex multi-rig operations
 
 ## Using with Gas Town
 
@@ -86,7 +94,7 @@ gastown-ui/
 ├── src/
 │   ├── app/              # Next.js pages
 │   │   ├── page.tsx      # Town Overview
-│   │   ├── terminal/     # Web terminal (xterm.js)
+│   │   ├── terminal/     # Mayor Chat interface
 │   │   ├── agents/       # Agent management
 │   │   ├── beads/        # Work items
 │   │   ├── convoys/      # Grouped work
@@ -97,7 +105,6 @@ gastown-ui/
 │   ├── components/       # Shared UI
 │   ├── lib/              # Utilities
 │   └── types/            # TypeScript types
-├── server/               # WebSocket terminal server
 ├── backend/              # Gas Town source (cloned)
 ├── beads-cli/            # Beads source (cloned)
 ├── bin/                  # Built CLI binaries
